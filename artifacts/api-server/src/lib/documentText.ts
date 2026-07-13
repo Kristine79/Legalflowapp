@@ -1,4 +1,10 @@
 import { createRequire } from "node:module";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { writeFile, unlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
 import mammoth from "mammoth";
 
 // pdf-parse v2 is ESM-only without a default export when bundled; load via CJS require
@@ -6,6 +12,25 @@ const _require = createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse") as (
   buffer: Buffer,
 ) => Promise<{ text: string }>;
+
+const execFileAsync = promisify(execFile);
+
+/** Extract text from legacy binary .doc via antiword CLI */
+async function extractDocViaAntiword(buffer: Buffer): Promise<string | null> {
+  const tmpPath = join(tmpdir(), `legalflow_${randomUUID()}.doc`);
+  try {
+    await writeFile(tmpPath, buffer);
+    const { stdout } = await execFileAsync("antiword", [tmpPath], {
+      encoding: "utf-8",
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    return stdout.trim() || null;
+  } catch {
+    return null;
+  } finally {
+    await unlink(tmpPath).catch(() => {});
+  }
+}
 
 const TEXT_MIME_TYPES = new Set([
   "text/plain",
@@ -52,6 +77,21 @@ export async function extractDocumentText(
     } catch {
       return null;
     }
+  }
+
+  // Legacy binary .doc — try antiword first, fall back to mammoth
+  if (fileType?.toLowerCase() === "application/msword" ||
+      fileName?.toLowerCase().endsWith(".doc")) {
+    const antiwordText = await extractDocViaAntiword(buffer);
+    if (antiwordText) return antiwordText;
+    // Mammoth sometimes handles .doc too
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      if (result.value.trim()) return result.value.trim();
+    } catch {
+      // ignore
+    }
+    return null;
   }
 
   if (isDocx(fileType, fileName)) {

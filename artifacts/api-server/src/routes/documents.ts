@@ -183,13 +183,31 @@ router.post("/documents/:documentId/analyze", async (req, res): Promise<void> =>
     return;
   }
 
-  if (!doc.textContent) {
-    res.status(400).json({ error: "Document has no text content to analyze" });
+  // If textContent was not extracted at upload time, try now (e.g. .doc via antiword)
+  let textContent = doc.textContent;
+  if (!textContent) {
+    if (!doc.storagePath) {
+      res.status(400).json({ error: "Файл документа не найден" });
+      return;
+    }
+    try {
+      const buffer = await readStoredFile(doc.storagePath);
+      textContent = await extractDocumentText(buffer, doc.fileType, doc.fileName);
+      if (textContent) {
+        await db.update(documentsTable).set({ textContent }).where(eq(documentsTable.id, doc.id));
+      }
+    } catch (err) {
+      req.log.warn({ err }, "On-demand text extraction failed");
+    }
+  }
+
+  if (!textContent) {
+    res.status(400).json({ error: "Не удалось извлечь текст из документа. Попробуйте загрузить файл в формате DOCX, PDF или TXT." });
     return;
   }
 
   try {
-    const result = await analyzeDocument(doc.textContent);
+    const result = await analyzeDocument(textContent);
     const [updated] = await db
       .update(documentsTable)
       .set({ aiSummary: JSON.stringify(result), status: "analyzed" })

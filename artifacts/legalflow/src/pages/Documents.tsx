@@ -52,6 +52,7 @@ interface DocumentItem {
   fileUrl: string;
   aiSummary: string | null;
   textContent: string | null;
+  storagePath: string | null;
   createdAt: string;
 }
 
@@ -463,7 +464,7 @@ export function Documents() {
                 </Button>
                 <Button
                   onClick={() => handleAnalyze(selectedDoc)}
-                  disabled={selectedDoc.status === "analyzed" || !selectedDoc.textContent}
+                  disabled={selectedDoc.status === "analyzed" || !selectedDoc.storagePath}
                 >
                   <Sparkles className="h-4 w-4 mr-2" /> {t.documents.analyze}
                 </Button>
@@ -565,7 +566,7 @@ function DocumentCard({ doc, onAnalyze, onOpen }: DocumentCardProps) {
               size="sm"
               className="flex-1"
               onClick={() => onAnalyze(doc)}
-              disabled={doc.status === "analyzed" || !doc.textContent}
+              disabled={doc.status === "analyzed" || !doc.storagePath}
             >
               {t.documents.analyze}
             </Button>
