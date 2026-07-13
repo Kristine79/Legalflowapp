@@ -576,13 +576,19 @@ export const en = {
     title: 'Integrations',
     subtitle: 'Connect demo services and configure notifications',
     telegram: {
-      title: 'Telegram',
-      description: 'Receive notifications about new clients and case status changes directly in the messenger.',
+      title: 'Telegram — notifications in your messenger',
+      description: 'Receive instant notifications about new clients and status changes directly in Telegram — no need to open the control panel.',
       connected: 'Connected',
       notConnected: 'Not connected',
       connect: 'Connect Telegram',
       connectedHint: 'Telegram is connected and ready to send notifications.',
-      hint: 'Press «Connect Telegram», open the bot, run /start and enter the Chat ID you receive.',
+      hint: 'Press «Connect Telegram», open the bot, run /start and enter the identifier you receive.',
+      steps: [
+        'Press «Connect Telegram».',
+        'Open the bot that appears and press Start (or type /start).',
+        'The bot will send your personal identifier — just copy it and paste it into the field below.',
+      ],
+      inputPlaceholder: 'Your Telegram identifier (copy from the bot message)',
       botLink: 'https://t.me/legaltechhelp_bot',
     },
     email: {

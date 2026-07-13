@@ -250,7 +250,6 @@ export function Settings() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{t.integrations.telegram.hint}</p>
                   {telegramConnected ? (
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button type="button" variant="secondary" disabled className="w-full sm:w-auto">
@@ -264,22 +263,29 @@ export function Settings() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Input
-                        placeholder="Chat ID из бота"
-                        autoComplete="off"
-                        value={chatIdInput}
-                        onChange={(e) => setChatIdInput(e.target.value)}
-                        className="sm:max-w-xs"
-                      />
-                      <Button
-                        type="button"
-                        onClick={handleConnectTelegram}
-                        disabled={isConnectingTelegram}
-                        className="w-full sm:w-auto"
-                      >
-                        <Send className="mr-2 h-4 w-4" /> {t.integrations.telegram.connect}
-                      </Button>
+                    <div className="space-y-4">
+                      <ol className="list-decimal list-inside space-y-1.5 text-sm text-muted-foreground">
+                        {t.integrations.telegram.steps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ol>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          placeholder={t.integrations.telegram.inputPlaceholder}
+                          autoComplete="off"
+                          value={chatIdInput}
+                          onChange={(e) => setChatIdInput(e.target.value)}
+                          className="sm:max-w-sm"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleConnectTelegram}
+                          disabled={isConnectingTelegram}
+                          className="w-full sm:w-auto"
+                        >
+                          <Send className="mr-2 h-4 w-4" /> {t.integrations.telegram.connect}
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
