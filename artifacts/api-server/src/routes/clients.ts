@@ -32,7 +32,11 @@ router.get("/clients", async (req, res): Promise<void> => {
 
 router.post("/clients", async (req, res): Promise<void> => {
   const user = await getAuthUser(req);
-  if (!user || !canCreateClients(user.role)) {
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!canCreateClients(user.role)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -78,7 +82,11 @@ router.get("/clients/:clientId", async (req, res): Promise<void> => {
 
 router.patch("/clients/:clientId", async (req, res): Promise<void> => {
   const user = await getAuthUser(req);
-  if (!user || !canCreateClients(user.role)) {
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!canCreateClients(user.role)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
