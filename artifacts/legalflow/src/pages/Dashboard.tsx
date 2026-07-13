@@ -42,7 +42,7 @@ export function Dashboard() {
         c.name.toLowerCase().includes(q) ||
         c.phone.toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q) ||
-        c.aiSummary?.category.toLowerCase().includes(q),
+        c.aiSummary?.category?.toLowerCase().includes(q),
     );
   }, [clients, searchQuery]);
 
