@@ -37,18 +37,24 @@ export function Profile() {
     defaultValues: profile,
   });
 
+  // Reset form fields when server data arrives or changes.
+  // `profile` is now memoized in use-profile, so this effect only fires
+  // when the actual user data changes — not on every render.
   useEffect(() => {
     form.reset(profile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [profile, form]);
 
+  // One-time sync: if the role returned from the server differs from the
+  // local placeholder, push the rest of the profile fields to the server
+  // so name/email/initials are not lost. Guarded by a ref so it only runs
+  // once per session even if deps re-evaluate.
   useEffect(() => {
-    if (serverUser && !didSyncRole.current && profile.role !== serverUser.role) {
+    if (serverUser && !didSyncRole.current) {
       didSyncRole.current = true;
-      // Role is managed server-side by admins; do not include it in profile sync.
       updateProfile({ name: profile.name, email: profile.email, initials: profile.initials, firmName: profile.firmName });
     }
-  }, [serverUser, profile, updateProfile]);
+    // profile and updateProfile are both stable (memoized) — safe to include
+  }, [serverUser?.id, profile, updateProfile]);
 
   const onSubmit = (data: ProfileValues) => {
     setIsSaving(true);

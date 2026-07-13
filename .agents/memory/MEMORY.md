@@ -1,2 +1,4 @@
 - [LegalFlow architecture](legalflow-architecture.md) — AI legal SaaS for Russian law firms; full stack built from zip source
 - [OpenAPI UUID format](openapi-uuid-format.md) — zod v3 incompatibility with format:uuid in OpenAPI spec
+- [Profile infinite loop fix](profile-infinite-loop.md) — profile object must be memoized; Profile.tsx useEffect deps must use stable primitives
+- [Clerk role deduplication](clerk-role-deduplication.md) — email-based role inheritance in sync endpoint prevents owner→client demotion on re-login

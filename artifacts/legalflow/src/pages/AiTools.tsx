@@ -476,7 +476,11 @@ function DocumentPanel({ onHistory }: DocumentPanelProps) {
           fileBase64,
         }),
       });
-      if (!res.ok) throw new Error(t.documents.errorUpload);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Сессия истекла. Пожалуйста, перезайдите в аккаунт.');
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error || t.documents.errorUpload);
+      }
       const created = (await res.json()) as DocumentItem;
       setDocs((prev) => [created, ...prev]);
       setSelectedDocId(created.id);

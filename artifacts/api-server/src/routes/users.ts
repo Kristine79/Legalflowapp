@@ -68,12 +68,25 @@ router.post("/users/sync", async (req, res): Promise<void> => {
 
   let role = existingUser?.role;
   if (!role) {
-    const [existingOwner] = await db
+    // Check if another record with the same email already holds the 'owner' role
+    // (e.g. the same person signed in with a different OAuth provider, creating a
+    //  second Clerk user ID for the same email address).  Inherit that role so the
+    //  user is not silently demoted to 'client' on their next sign-in.
+    const [emailOwner] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.role, "owner"))
+      .where(and(eq(usersTable.email, email), eq(usersTable.role, "owner")))
       .limit(1);
-    role = existingOwner ? "client" : "owner";
+    if (emailOwner) {
+      role = "owner";
+    } else {
+      const [existingOwner] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.role, "owner"))
+        .limit(1);
+      role = existingOwner ? "client" : "owner";
+    }
   }
 
   const [dbUser] = await db

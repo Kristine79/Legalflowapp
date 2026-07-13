@@ -7,7 +7,7 @@ import {
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@clerk/react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 export const DEFAULT_PROFILE = {
   name: 'Адвокат',
@@ -61,13 +61,20 @@ export function useProfile(): UseProfileReturn {
 
   const testTelegramMutation = useTestTelegram();
 
-  const profile = {
-    name: user?.name || DEFAULT_PROFILE.name,
-    email: user?.email || DEFAULT_PROFILE.email,
-    role: user?.role || DEFAULT_PROFILE.role,
-    initials: user?.initials || DEFAULT_PROFILE.initials,
-    firmName: user?.firmName || DEFAULT_PROFILE.firmName,
-  };
+  // Memoize so the object reference is stable between renders.
+  // Without this, any useEffect/useCallback that depends on `profile`
+  // would re-run on every render, causing infinite loops.
+  const profile = useMemo(
+    () => ({
+      name: user?.name || DEFAULT_PROFILE.name,
+      email: user?.email || DEFAULT_PROFILE.email,
+      role: user?.role || DEFAULT_PROFILE.role,
+      initials: user?.initials || DEFAULT_PROFILE.initials,
+      firmName: user?.firmName || DEFAULT_PROFILE.firmName,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user?.name, user?.email, user?.role, user?.initials, user?.firmName],
+  );
 
   const updateProfile = useCallback(
     (data: { name?: string; email?: string; initials?: string; firmName?: string }) => {
