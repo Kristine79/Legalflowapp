@@ -1,0 +1,1577 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.2.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: ai
+    description: AI analysis operations
+  - name: analytics
+    description: Dashboard analytics operations
+  - name: users
+    description: Current user operations
+  - name: clients
+    description: Client operations
+  - name: cases
+    description: Case operations
+  - name: activities
+    description: Activity operations
+  - name: tasks
+    description: Task operations
+  - name: notifications
+    description: Notification and Telegram operations
+  - name: calendar
+    description: Calendar event operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /ai/analyze:
+    post:
+      operationId: analyzeIntake
+      tags: [ai]
+      summary: Analyze legal intake
+      description: Analyzes a legal issue description and returns a structured AI summary, category, priority, and recommended next action.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntakeAnalysisInput"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntakeAnalysis"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: AI service error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user
+      description: Returns the current authenticated user's DB profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/sync:
+    post:
+      operationId: syncCurrentUser
+      tags: [users]
+      summary: Sync current Clerk user into the database
+      description: Creates or updates the current authenticated user's DB record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "200":
+          description: User synced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users
+      description: Returns all users in the firm (owner and admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/{userId}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [users]
+      summary: Update user role
+      description: Updates a user's role (owner and admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRoleInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/me/telegram:
+    patch:
+      operationId: updateUserTelegram
+      tags: [users]
+      summary: Update Telegram settings
+      description: Updates the current user's Telegram chat ID and notification settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTelegramSettings"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /telegram/test:
+    post:
+      operationId: testTelegram
+      tags: [notifications]
+      summary: Send test Telegram message
+      responses:
+        "200":
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List clients
+      description: Returns all clients for the current user
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a client
+      description: Creates a new client for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientInput"
+      responses:
+        "201":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /clients/{clientId}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get a client
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update a client
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientInput"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete a client
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List cases
+      description: Returns all cases for the current user
+      responses:
+        "200":
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create a case
+      description: Creates a new case for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseInput"
+      responses:
+        "201":
+          description: Created case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /cases/{caseId}:
+    get:
+      operationId: getCase
+      tags: [cases]
+      summary: Get a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: Case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseInput"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCase
+      tags: [cases]
+      summary: Delete a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /activities:
+    get:
+      operationId: listActivities
+      tags: [activities]
+      summary: List activities
+      description: Returns all activities for the current user
+      responses:
+        "200":
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createActivity
+      tags: [activities]
+      summary: Create an activity
+      description: Records a new activity for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityInput"
+      responses:
+        "201":
+          description: Created activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks
+      description: Returns all tasks for the current user
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a task
+      description: Creates a new task for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /tasks/{taskId}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /tasks/{taskId}/status:
+    patch:
+      operationId: updateTaskStatus
+      tags: [tasks]
+      summary: Update task status
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskStatusInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      description: Returns all notifications for the current user
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createNotification
+      tags: [notifications]
+      summary: Create a notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationInput"
+      responses:
+        "201":
+          description: Created notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notifications/{notificationId}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Uuid"
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notifications/telegram:
+    post:
+      operationId: sendTelegramNotification
+      tags: [notifications]
+      summary: Send Telegram notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendTelegram"
+      responses:
+        "200":
+          description: Result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analytics:
+    get:
+      operationId: getDashboardStats
+      tags: [analytics]
+      summary: Get dashboard analytics
+      description: Returns real-time analytics computed from PostgreSQL — client counts, status distribution, and weekly trend.
+      responses:
+        "200":
+          description: Dashboard analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /calendar:
+    get:
+      operationId: listCalendarEvents
+      tags: [calendar]
+      summary: List calendar events
+      description: Returns tasks with due dates as calendar events
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of calendar events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarEvent"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Uuid:
+      type: string
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    IntakeAnalysisInput:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+      required:
+        - description
+    IntakeAnalysisPriority:
+      type: string
+      enum: [low, medium, high, urgent]
+    IntakeAnalysis:
+      type: object
+      properties:
+        summary:
+          type: string
+        category:
+          type: string
+        type:
+          type: string
+        priority:
+          $ref: "#/components/schemas/IntakeAnalysisPriority"
+          nullable: true
+        risks:
+          type: array
+          items:
+            type: string
+        questions:
+          type: array
+          items:
+            type: string
+        documents:
+          type: array
+          items:
+            type: string
+        nextAction:
+          type: string
+      required:
+        - summary
+        - category
+        - risks
+        - questions
+        - documents
+        - nextAction
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    UserRole:
+      type: string
+      enum: [owner, admin, lawyer, assistant, client]
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/UserRole"
+        firmName:
+          type: string
+          nullable: true
+        initials:
+          type: string
+          nullable: true
+        telegramChatId:
+          type: string
+          nullable: true
+        telegramNotificationsEnabled:
+          type: boolean
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - role
+        - createdAt
+        - updatedAt
+    UserInput:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/UserRole"
+          nullable: true
+        firmName:
+          type: string
+          nullable: true
+        initials:
+          type: string
+          nullable: true
+        telegramChatId:
+          type: string
+          nullable: true
+        telegramNotificationsEnabled:
+          type: boolean
+          nullable: true
+      required:
+        - email
+    UpdateUserRoleInput:
+      type: object
+      properties:
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required:
+        - role
+    TaskStatus:
+      type: string
+      enum: [pending, in-progress, done, cancelled]
+    TaskStatusInput:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+      required:
+        - status
+    TaskPriority:
+      type: string
+      enum: [low, medium, high, urgent]
+    Task:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        userId:
+          type: string
+        clientId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        caseId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - status
+        - createdAt
+        - updatedAt
+    TaskInput:
+      type: object
+      properties:
+        clientId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        caseId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TaskStatus"
+        priority:
+          $ref: "#/components/schemas/TaskPriority"
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+      required:
+        - title
+    Notification:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        userId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          nullable: true
+        channel:
+          type: string
+          nullable: true
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - message
+        - read
+        - createdAt
+        - updatedAt
+    NotificationInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          nullable: true
+        channel:
+          type: string
+          nullable: true
+        read:
+          type: boolean
+      required:
+        - title
+        - message
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+          enum: [task, case]
+        status:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          nullable: true
+        sourceId:
+          $ref: "#/components/schemas/Uuid"
+      required:
+        - id
+        - title
+        - date
+        - type
+        - sourceId
+    SendTelegram:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+      required:
+        - message
+    TelegramResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        error:
+          type: string
+          nullable: true
+      required:
+        - ok
+    UpdateTelegramSettings:
+      type: object
+      properties:
+        telegramChatId:
+          type: string
+          nullable: true
+        telegramNotificationsEnabled:
+          type: boolean
+          nullable: true
+      required:
+        - telegramChatId
+        - telegramNotificationsEnabled
+    Client:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        description:
+          type: string
+        status:
+          type: string
+          enum: [new, in-progress, waiting, closed]
+        category:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          nullable: true
+        aiSummary:
+          type: string
+          nullable: true
+        nextAction:
+          type: string
+          nullable: true
+        risks:
+          type: array
+          items:
+            type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            type: string
+          nullable: true
+        documents:
+          type: array
+          items:
+            type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - name
+        - description
+        - status
+        - createdAt
+        - updatedAt
+    ClientInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        description:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          enum: [new, in-progress, waiting, closed]
+        category:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          nullable: true
+        aiSummary:
+          type: string
+          nullable: true
+        nextAction:
+          type: string
+          nullable: true
+        risks:
+          type: array
+          items:
+            type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            type: string
+          nullable: true
+        documents:
+          type: array
+          items:
+            type: string
+          nullable: true
+      required:
+        - name
+        - description
+    CaseStatus:
+      type: string
+      enum: [new-request, consultation, documents, court, closed]
+    Case:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        userId:
+          type: string
+        clientId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        lawyerId:
+          type: string
+          nullable: true
+        assistantId:
+          type: string
+          nullable: true
+        caseNumber:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/CaseStatus"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - caseNumber
+        - title
+        - status
+        - createdAt
+        - updatedAt
+    CaseInput:
+      type: object
+      properties:
+        clientId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        lawyerId:
+          type: string
+          nullable: true
+        assistantId:
+          type: string
+          nullable: true
+        caseNumber:
+          type: string
+          minLength: 1
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/CaseStatus"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          nullable: true
+      required:
+        - title
+    Activity:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        userId:
+          type: string
+        clientId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        caseId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        type:
+          type: string
+        message:
+          type: string
+        metadata:
+          type: ["object", "null"]
+          additionalProperties: {}
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - message
+        - createdAt
+    ActivityInput:
+      type: object
+      properties:
+        clientId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        caseId:
+          $ref: "#/components/schemas/Uuid"
+          nullable: true
+        type:
+          type: string
+          minLength: 1
+        message:
+          type: string
+          minLength: 1
+        metadata:
+          type: ["object", "null"]
+          additionalProperties: {}
+      required:
+        - type
+        - message
+    DashboardStats:
+      type: object
+      properties:
+        totalClients:
+          type: integer
+        newToday:
+          type: integer
+        inProgress:
+          type: integer
+        closed:
+          type: integer
+        statusBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              count:
+                type: integer
+            required:
+              - status
+              - count
+        weeklyTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+            required:
+              - date
+              - count
+      required:
+        - totalClients
+        - newToday
+        - inProgress
+        - closed
+        - statusBreakdown
+        - weeklyTrend

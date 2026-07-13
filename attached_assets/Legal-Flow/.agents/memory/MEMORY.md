@@ -1,0 +1,3 @@
+- [Orval Zod v3 format gotcha](orval-zod-v3-formats.md) — OpenAPI `format: uuid`/`format: email` break Orval v8 output when zod resolves to v3.
+- [Legacy localStorage-to-backend migration](localstorage-to-backend-hooks.md) — keep only UI flags in localStorage; route all domain mutations through generated hooks and invalidate related queries.
+- [LegalFlow stack](legalflow-stack.md) — full-stack AI-CRM for Russian law firms; Clerk auth + Drizzle + OpenAI waterfall + Telegram notifications.

@@ -1,0 +1,2 @@
+- [LegalFlow architecture](legalflow-architecture.md) — AI legal SaaS for Russian law firms; full stack built from zip source
+- [OpenAPI UUID format](openapi-uuid-format.md) — zod v3 incompatibility with format:uuid in OpenAPI spec
