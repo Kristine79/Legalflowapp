@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { TaskInput } from '@workspace/api-client-react';
 import { Shell } from '@/components/layout/Shell';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,6 +56,7 @@ export function Tasks() {
   const { tasks, isLoading: loading, createTask, updateTask, deleteTask, toggleStatus } = useTasks();
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -115,9 +116,17 @@ export function Tasks() {
     if (!ok) setError(t.ui.error);
   };
 
-  const filtered = filterStatus === 'all'
-    ? tasks
-    : tasks.filter((task) => task.status === filterStatus);
+  const filtered = useMemo(() => {
+    const byStatus = filterStatus === 'all'
+      ? tasks
+      : tasks.filter((task) => task.status === filterStatus);
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return byStatus;
+    return byStatus.filter((task) =>
+      task.title.toLowerCase().includes(q) ||
+      (task.description ?? '').toLowerCase().includes(q),
+    );
+  }, [tasks, filterStatus, searchQuery]);
 
   const statusLabel = (s: string) => {
     const map: Record<string, string> = {
@@ -141,7 +150,7 @@ export function Tasks() {
   };
 
   return (
-    <Shell>
+    <Shell searchQuery={searchQuery} onSearchChange={setSearchQuery}>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

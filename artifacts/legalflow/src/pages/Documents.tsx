@@ -267,7 +267,7 @@ export function Documents() {
   const analysis = selectedDoc ? parseAiSummary(selectedDoc.aiSummary) : null;
 
   return (
-    <Shell>
+    <Shell searchQuery={query} onSearchChange={setQuery}>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -327,16 +327,6 @@ export function Documents() {
         )}
 
         <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t.documents.searchPlaceholder}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <Button
