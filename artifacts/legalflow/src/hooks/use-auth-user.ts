@@ -23,9 +23,6 @@ export interface UseAuthUserReturn {
 export function useAuthUser(): UseAuthUserReturn {
   const { user, isLoaded } = useUser();
   const qc = useQueryClient();
-  // Track whether a sync is currently in-flight or has already succeeded,
-  // but reset on error so we can retry if the first attempt failed (e.g.
-  // Clerk session temporarily unavailable during first render).
   const syncedRef = useRef(false);
 
   const {
@@ -50,8 +47,10 @@ export function useAuthUser(): UseAuthUserReturn {
     const email = user.primaryEmailAddress?.emailAddress;
     if (!email) return;
 
-    // Mark as in-flight BEFORE the call so concurrent renders don't
-    // fire duplicate requests.
+    // Set before calling so concurrent renders don't fire duplicate requests.
+    // The server-side auto-provision in getAuthUser handles the race condition
+    // where sync hasn't completed yet when another API call fires, so we don't
+    // need to retry here on failure.
     syncedRef.current = true;
 
     const name = user.fullName || user.firstName || null;
@@ -65,17 +64,7 @@ export function useAuthUser(): UseAuthUserReturn {
           .toUpperCase()
       : null;
 
-    sync.mutate(
-      { data: { email, name, initials } },
-      {
-        onError: () => {
-          // Allow retry on next render cycle if sync failed (e.g. transient
-          // Clerk session issue prevented the server from authenticating the
-          // request).
-          syncedRef.current = false;
-        },
-      },
-    );
+    sync.mutate({ data: { email, name, initials } });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user?.id]);
 
