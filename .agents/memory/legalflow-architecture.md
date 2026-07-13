@@ -20,11 +20,14 @@ To restore: `cp -r attached_assets/Legal-Flow/artifacts/legalflow/src artifacts/
 - assistant sees cases assigned as assistantId
 - client sees cases linked to their email
 
-## DB schema (original)
-- `documents`: column `ai_summary` (NOT `ai_analysis`)
-- `tasks`: no `assignee_id` column
-- `users`: no `onboarding_complete` column
-- `notifications`: column `is_read` boolean
+## DB schema (original) — full audit done
+All 9 tables align with Drizzle schemas. Applied these manual SQL fixes to bring DB in line:
+- `documents`: rename `ai_analysis` → `ai_summary`; add `status text NOT NULL DEFAULT 'pending'`
+- `tasks`: drop `assignee_id`
+- `users`: drop `onboarding_complete`
+- `notifications`: rename `is_read` → `read`; add `channel text`
+- `notifications.type`: drop NOT NULL constraint (nullable in schema)
+Documents `clientId`/`caseId`: use `|| null` not `?? null` when inserting (empty string fails UUID constraint)
 
 ## Clerk proxy
 - `clerkProxyMiddleware` is production-only (guard: `NODE_ENV !== 'production'`)

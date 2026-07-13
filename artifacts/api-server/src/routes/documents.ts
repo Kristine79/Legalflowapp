@@ -90,8 +90,8 @@ router.post("/documents", async (req, res): Promise<void> => {
     .insert(documentsTable)
     .values({
       userId: user.userId,
-      clientId: clientId ?? null,
-      caseId: caseId ?? null,
+      clientId: clientId || null,
+      caseId: caseId || null,
       title,
       fileName: fileName || null,
       storagePath,

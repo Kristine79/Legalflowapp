@@ -39,7 +39,8 @@ export function Profile() {
 
   useEffect(() => {
     form.reset(profile);
-  }, [profile, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   useEffect(() => {
     if (serverUser && !didSyncRole.current && profile.role !== serverUser.role) {
