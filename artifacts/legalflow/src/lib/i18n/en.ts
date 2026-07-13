@@ -529,7 +529,7 @@ export const en = {
     ],
   },
   about: {
-    title: 'About the AI platform for legal practice management',
+    title: 'About LegalFlow',
     subtitle: 'A legal CRM that helps manage cases, clients, and automate routine work',
     whatIs: {
       title: 'What is the AI platform for legal practice management',
